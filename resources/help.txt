@@ -1,2 +1,4 @@
 foreign keys en SQLite necesitan activarse explícitamente con
 PRAGMA foreign_keys = ON;
+Pragma table_info()
+pragma schema.table_info()
