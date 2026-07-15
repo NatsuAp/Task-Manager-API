@@ -37,7 +37,7 @@ class ActualizarTarea(BaseModel):
 class Tarea(BaseModel):
     id: int
     nombre: str
-    descripcion: str | None
-    fecha: str | None
-    estado: str | None
+    descripcion: str | None = None
+    fecha: str | None = None
+    estado: str | None = None
     category_id: int

@@ -1,6 +1,22 @@
+##SQLITE
 foreign keys en SQLite necesitan activarse explícitamente con
 PRAGMA foreign_keys = ON;
 Pragma table_info()
 
 
 model_dump(exclude_unset=True) — esto te da un diccionario solo con los campos que el usuario mandó explícitamente,
+
+
+CREATE TABLE tareas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    titulo TEXT,
+    descripcion TEXT,
+    fecha TEXT,
+    estado TEXT,
+    category_id INTEGER,
+    FOREIGN KEY (category_id) REFERENCES categorias(id) ON DELETE CASCADE
+);
+
+##POSTGRES
+
+Mirar esquema tabla -> \d tabla

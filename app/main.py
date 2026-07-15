@@ -1,4 +1,4 @@
-import app.database as database
+import app.database_sqlite as database
 from typing import Any
 from fastapi import FastAPI, Depends
 from pydantic import BaseModel

@@ -1,0 +1,9 @@
+
+Fase 1 — Fundamentos API + SQL a mano  - completa
+
+Métodos HTTP y CRUD completo — hecho para categorias y tareas (GET, POST, PATCH, DELETE)
+SQL a mano con sqlite3 (sin ORM)
+Foreign keys entre categorias y tareas, con ON DELETE CASCADE
+FastAPI: estructura del proyecto (main.py, database.py, schemas.py, routers/), Depends, Pydantic
+Manejo de errores con HTTPException (404, 400)
+Actualización parcial dinámica en PATCH

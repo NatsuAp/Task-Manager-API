@@ -1,7 +1,7 @@
 from dns.name import empty
 from fastapi import HTTPException
 from app.schemas import CrearTarea, Tarea, ActualizarTarea
-import app.database as database
+import app.database_sqlite as database
 from fastapi import Depends, APIRouter
 from pydantic import BaseModel
 router = APIRouter()

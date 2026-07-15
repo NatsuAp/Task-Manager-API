@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-import app.database as database
+import app.database_sqlite as database
 from app.schemas import Categoria, CrearCategoria, ActualizarCategoria
 from fastapi import HTTPException
 router = APIRouter()
