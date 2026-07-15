@@ -1,3 +1,7 @@
+from fastapi import HTTPException
+from typing import Tuple
+
+from starlette import status
 
 from app.schemas import CrearTarea
 from app.schemas import Tarea
@@ -10,8 +14,8 @@ def crear_tarea(tarea: CrearTarea, db = Depends(database.get_db)) -> Tarea:
 
     cursor = db.cursor()
     estado = 'Pendiente'
-    print(tarea)
-    cursor.execute('PRAGMA foreign_keys = ON;')
+
+
     cursor.execute("insert into tareas (titulo, descripcion, fecha, estado, category_id) values (?, ?, ?, ?, ?)", (tarea.nombre, tarea.descripcion, tarea.fecha, estado, tarea.category_id))
     db.commit()
     tarea_id = cursor.lastrowid
@@ -21,20 +25,43 @@ def crear_tarea(tarea: CrearTarea, db = Depends(database.get_db)) -> Tarea:
                  nombre=tarea.nombre,
                  descripcion=tarea.descripcion,
                  fecha=tarea.fecha,
-                 estado="Pendiente",
+                 estado= estado,
                  category_id=tarea.category_id)
 
+@router.get("/tareas")
+def get_tareas(category_id: int | None = None, db = Depends(database.get_db))-> list[Tarea]:
+    cursor = db.cursor()
+    query = "SELECT * FROM tareas "
 
-#
-# class CrearTarea(BaseModel):
-#     nombre: str
-#     descripcion: str | None
-#     fecha: str | None
-#     category_id: int
-# class Tarea(BaseModel):
-#     id: int
-#     nombre: str
-#     descripcion: str | None
-#     fecha: str | None
-#     estado: str | None
-#     category_id: int
+    params = ()
+    if category_id is not None:
+        query += f"WHERE category_id = ?"
+        params = (category_id,)
+    cursor.execute(query, params)
+
+
+    resultados = cursor.fetchall()
+    tareas = []
+    for tarea in resultados:
+        #cursor.execute("SELECT titulo FROM categorias  WHERE id = ?", (category_id,))
+        tareas.append(Tarea(id=tarea["id"],nombre=tarea["titulo"],descripcion=tarea["descripcion"],fecha=tarea["fecha"],estado=tarea["estado"], category_id=tarea["category_id"]))
+
+    return tareas
+
+@router.get("/tareas/{id}")
+def get_tarea(id: int, db = Depends(database.get_db)) -> Tarea:
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM tareas WHERE id = ?", (id,))
+    resultado = cursor.fetchone()
+    if resultado == None :
+        raise HTTPException(status_code=404, detail=" Tarea no encontrada")
+
+    return Tarea(id=resultado["id"],
+                 nombre=resultado["titulo"],
+                 descripcion=resultado["descripcion"],
+                 fecha=resultado["fecha"],
+                 estado=resultado["estado"],
+                 category_id=resultado["category_id"])
+
+
+

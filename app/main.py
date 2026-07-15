@@ -4,20 +4,12 @@ from fastapi import FastAPI, Depends
 from pydantic import BaseModel
 from app.schemas import Categoria
 from app.routers.tareas import router as tareas_router
-
+from app.routers.categorias import router as categorias_router
 app = FastAPI()
 app.include_router(tareas_router)
+
+app.include_router(categorias_router)
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
-@app.get("/categorias")
-def get_categorias(db = Depends(database.get_db))-> list[Categoria]:
-    categorias = []
-    cursor = db.cursor()
-    cursor.execute("SELECT * FROM categorias")
-    resultados = cursor.fetchall()
-    for fila in resultados:
-        categorias.append(Categoria(id=fila["id"], nombre=fila["titulo"]))
+    return {"Working :)"}
 
-
-    return categorias

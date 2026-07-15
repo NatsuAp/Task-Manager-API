@@ -5,6 +5,9 @@ class Categoria(BaseModel):
     id: int
     nombre: str
 
+class CrearCategoria(BaseModel):
+    nombre: str
+
 class Plantilla(BaseModel):
     id: int
     nombre: str
