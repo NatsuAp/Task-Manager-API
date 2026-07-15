@@ -2,9 +2,11 @@ import app.database as database
 from typing import Any
 from fastapi import FastAPI, Depends
 from pydantic import BaseModel
-from schemas import Categoria
+from app.schemas import Categoria
+from app.routers.tareas import router as tareas_router
 
 app = FastAPI()
+app.include_router(tareas_router)
 @app.get("/")
 def read_root():
     return {"Hello": "World"}

@@ -12,11 +12,16 @@ class Plantilla(BaseModel):
     category_id: int
     es_default: int
 
+class CrearTarea(BaseModel):
+    nombre: str
+    descripcion: str | None
+    fecha: str | None
+    category_id: int
+
 class Tarea(BaseModel):
     id: int
     nombre: str
-    campos: str | None
-    fecha: date | None
-    estado: str
-    category_id: int | None
-    template_id: int | None
+    descripcion: str | None
+    fecha: str | None
+    estado: str | None
+    category_id: int
