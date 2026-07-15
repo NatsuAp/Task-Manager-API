@@ -24,3 +24,8 @@ def crear_categoria(categoria: CrearCategoria, db=Depends(database.get_db))-> Ca
     db.commit()
     return Categoria(id=cursor.lastrowid, nombre=categoria.nombre)
 
+#TODO: DELETE ENDPOINT para elimnar categorias, me toca definir si al eliminar una categoria,
+# se eliminan las tareas que dependan de ella, o cambio la categoria a "Tablero" o alguna generica
+@router.delete("/categorias{id}")
+def eliminar_categoria()
+

@@ -1,6 +1,9 @@
 from pydantic import BaseModel
 from datetime import datetime as date
 
+from pydantic_core.core_schema import none_schema
+
+
 class Categoria(BaseModel):
     id: int
     nombre: str
@@ -20,6 +23,13 @@ class CrearTarea(BaseModel):
     descripcion: str | None
     fecha: str | None
     category_id: int
+
+class ActualizarTarea(BaseModel):
+    titulo: str | None = None
+    descripcion: str | None = None
+    fecha: str | None = None
+    estado: str | None = None
+    category_id: int | None = None
 
 class Tarea(BaseModel):
     id: int

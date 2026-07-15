@@ -1,4 +1,6 @@
 foreign keys en SQLite necesitan activarse explícitamente con
 PRAGMA foreign_keys = ON;
 Pragma table_info()
-pragma schema.table_info()
+
+
+model_dump(exclude_unset=True) — esto te da un diccionario solo con los campos que el usuario mandó explícitamente,
