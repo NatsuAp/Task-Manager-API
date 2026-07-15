@@ -18,10 +18,13 @@ class Plantilla(BaseModel):
     category_id: int
     es_default: int
 
+class ActualizarCategoria(BaseModel):
+    titulo: str
+
 class CrearTarea(BaseModel):
     nombre: str
-    descripcion: str | None
-    fecha: str | None
+    descripcion: str | None = None
+    fecha: str | None = None
     category_id: int
 
 class ActualizarTarea(BaseModel):

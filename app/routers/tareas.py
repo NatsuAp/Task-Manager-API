@@ -1,3 +1,4 @@
+from dns.name import empty
 from fastapi import HTTPException
 from app.schemas import CrearTarea, Tarea, ActualizarTarea
 import app.database as database
@@ -7,10 +8,12 @@ router = APIRouter()
 
 @router.post("/tareas")
 def crear_tarea(tarea: CrearTarea, db = Depends(database.get_db)) -> Tarea:
-
     cursor = db.cursor()
     estado = 'Pendiente'
-
+    cursor.execute("SELECT * FROM categorias WHERE id = ?", (tarea.category_id,))
+    resultado = cursor.fetchone()
+    if resultado is None:
+        raise HTTPException(status_code=404, detail="Categoria con ese ID no existe")
 
     cursor.execute("insert into tareas (titulo, descripcion, fecha, estado, category_id) values (?, ?, ?, ?, ?)", (tarea.nombre, tarea.descripcion, tarea.fecha, estado, tarea.category_id))
     db.commit()
@@ -59,64 +62,43 @@ def get_tarea(id: int, db = Depends(database.get_db)) -> Tarea:
                  estado=resultado["estado"],
                  category_id=resultado["category_id"])
 
-
-
 @router.patch("/tareas/{id}")
 def actualizar_tarea(id: int, tarea_a_actualizar: ActualizarTarea, db = Depends(database.get_db)) -> Tarea:
-
-
-    data = {
-        "titulo": tarea_a_actualizar.titulo,
-        "descripcion": tarea_a_actualizar.descripcion,
-        "fecha": tarea_a_actualizar.fecha,
-        "estado": tarea_a_actualizar.estado,
-        "category_id": tarea_a_actualizar.category_id,
-    }
-
 
     cursor = db.cursor()
     cursor.execute("SELECT * FROM tareas WHERE id = ?", (id,))
     resultado = cursor.fetchone()
     if resultado is None:
         raise HTTPException(status_code=404, detail=" Tarea no encontrada")
-    tarea_final = Tarea(id=resultado["id"],
-                 nombre=resultado["titulo"],
-                 descripcion=resultado["descripcion"],
-                 fecha=resultado["fecha"],
-                 estado=resultado["estado"],
-                 category_id=resultado["category_id"]
-                 )
 
-    if tarea_a_actualizar.titulo is not None:
-        tarea_final.nombre = tarea_a_actualizar.titulo
-    if tarea_a_actualizar.descripcion is not None:
-        tarea_final.descripcion = tarea_a_actualizar.descripcion
-    if tarea_a_actualizar.fecha is not None:
-        tarea_final.fecha = tarea_a_actualizar.fecha
-    if tarea_a_actualizar.estado is not None:
-        tarea_final.estado = tarea_a_actualizar.estado
-    if tarea_a_actualizar.category_id is not None:
-        tarea_final.category_id = tarea_a_actualizar.category_id
+    tarea_final_dict = {
+        "id": resultado["id"],
+        "nombre": resultado["titulo"],
+        "descripcion": resultado["descripcion"],
+        "fecha": resultado["fecha"],
+        "estado": resultado["estado"],
+        "category_id": resultado["category_id"]
+    }
+
 
 
     datos = tarea_a_actualizar.model_dump(exclude_defaults=True,
                                           exclude_none=True,
                                           exclude_unset=True,)
-    if datos is None:
+    for key, value in datos.items():
+        tarea_final_dict[key] = value
+
+    tarea_final = Tarea(**tarea_final_dict)
+    if len(datos) == 0:
         raise HTTPException(status_code=400, detail="No se proporcionaron datos para actualizar")
     values = []
 
-    datos["id"] = id
-    for key, value in datos.items():
-        values.append(value)
-
     set_str = ""
 
-    for key, value in data.items():
-        if value is not None:
-
-            set_str += f"{key} = ?, "
-
+    for key, value in datos.items():
+        values.append(value)
+        set_str += f"{key} = ?, "
+    values.append(id)
     set_str = set_str[:-2]
 
     query = "UPDATE tareas SET " + set_str + " WHERE id = ?"
