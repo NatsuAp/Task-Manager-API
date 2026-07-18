@@ -20,7 +20,7 @@ def crear_tarea(tarea: CrearTarea, db = Depends(database.get_db_postgresql)) -> 
 
 
 
-    cursor.execute("insert into tareas (titulo, descripcion, fecha, estado, category_id) values (%s, %s, %s, %s, %s) RETURNING id", (tarea.nombre, tarea.descripcion, tarea.fecha, estado, tarea.category_id))
+    cursor.execute("insert into tareas (titulo_tarea, descripcion, fecha, estado, category_id) values (%s, %s, %s, %s, %s) RETURNING id", (tarea.nombre, tarea.descripcion, tarea.fecha, estado, tarea.category_id))
     db.commit()
     fetch_ans = cursor.fetchone()
 
@@ -35,20 +35,29 @@ def crear_tarea(tarea: CrearTarea, db = Depends(database.get_db_postgresql)) -> 
 @router.get("/tareas")
 def get_tareas(category_id: int | None = None, db = Depends(database.get_db_postgresql))-> list[Tarea]:
     cursor = db.cursor()
-    query = "SELECT * FROM tareas "
-
+    query = ("SELECT tareas.id, tareas.titulo_tarea, tareas.descripcion, tareas.fecha, tareas.estado, tareas.category_id, categorias.titulo_categoria "
+             "FROM tareas INNER JOIN categorias ON tareas.category_id = categorias.id")
+    #query += "INNER JOIN categorias ON tareas.category_id = categorias.id"
     params = ()
     if category_id is not None:
-        query += f"WHERE category_id = %s"
+        query += " WHERE category_id = %s"
         params = (category_id,)
+    query += " ORDER BY tareas.id ASC"
     cursor.execute(query, params)
 
-
+    #TODO: la variable resultado contiene la columna unida de categorias "titulo_categoria" pero no se guarda al momento de retornar la lista tareas
+    # puesto que el esquema de tareas no tiene una variable que guarde el nombre de la categoria, actualmente solo el id de la categoria,
+    # tocaria añadir una nueva variable al esquema y cambiar todos los endpoints donde se utilice este para que funcione debidamente
     resultados = cursor.fetchall()
     tareas = []
     for tarea in resultados:
         #cursor.execute("SELECT titulo FROM categorias  WHERE id = %s", (category_id,))
-        tareas.append(Tarea(id=tarea["id"],nombre=tarea["titulo"],descripcion=tarea["descripcion"],fecha=tarea["fecha"],estado=tarea["estado"], category_id=tarea["category_id"]))
+        tareas.append(Tarea(id=tarea["id"],
+                            nombre=tarea["titulo_tarea"],
+                            descripcion=tarea["descripcion"],
+                            fecha=tarea["fecha"],
+                            estado=tarea["estado"],
+                            category_id=tarea["category_id"]))
 
     return tareas
 
@@ -61,7 +70,7 @@ def get_tarea(id: int, db = Depends(database.get_db_postgresql)) -> Tarea:
         raise HTTPException(status_code=404, detail=" Tarea no encontrada")
 
     return Tarea(id=resultado["id"],
-                 nombre=resultado["titulo"],
+                 nombre=resultado["titulo_tarea"],
                  descripcion=resultado["descripcion"],
                  fecha=resultado["fecha"],
                  estado=resultado["estado"],
@@ -78,7 +87,7 @@ def actualizar_tarea(id: int, tarea_a_actualizar: ActualizarTarea, db = Depends(
 
     tarea_final_dict = {
         "id": resultado["id"],
-        "nombre": resultado["titulo"],
+        "nombre": resultado["titulo_tarea"],
         "descripcion": resultado["descripcion"],
         "fecha": resultado["fecha"],
         "estado": resultado["estado"],
@@ -124,7 +133,7 @@ def eliminar_tarea(id: int, db = Depends(database.get_db_postgresql))-> Tarea:
     db.commit()
 
     return Tarea(id=resultado["id"],
-                 nombre=resultado["titulo"],
+                 nombre=resultado["titulo_tarea"],
                  descripcion=resultado["descripcion"],
                  fecha=resultado["fecha"],
                  estado=resultado["estado"],
