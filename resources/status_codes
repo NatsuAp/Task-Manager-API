@@ -1,0 +1,10 @@
+200 OK: The request was successfully processed and the server returned the requested data.
+301 Moved Permanently: The requested resource has been permanently relocated to a new URI.
+302 Found: The resource is temporarily located at a different URI, often used for redirects.
+400 Bad Request: The server cannot process the request due to malformed syntax or invalid parameters.
+401 Unauthorized: Authentication is required and has either failed or not yet been provided.
+403 Forbidden: The server understands the request but refuses to authorize it, regardless of authentication.
+404 Not Found: The server cannot find the requested resource.
+500 Internal Server Error: A generic error indicating the server encountered an unexpected condition.
+502 Bad Gateway: The server, acting as a gateway, received an invalid response from an upstream server.
+503 Service Unavailable: The server is currently unable to handle the request, often due to maintenance or overload.
