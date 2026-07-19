@@ -1,8 +1,18 @@
-from pydantic import BaseModel
-from datetime import datetime as date
+from pydantic import BaseModel, json
 
-from pydantic_core.core_schema import none_schema
 
+class CrearPlantilla(BaseModel):
+    nombre: str
+    category_id: int
+    campos: str
+
+
+class Plantilla(BaseModel):
+    id: int
+    nombre: str
+    category_id: int
+    campos : str
+    es_default: bool
 
 class Categoria(BaseModel):
     id: int

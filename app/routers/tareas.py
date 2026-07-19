@@ -32,9 +32,12 @@ def crear_tarea(tarea: CrearTarea, db = Depends(database.get_db_postgresql)) -> 
                  estado= estado,
                  category_id=tarea.category_id)
 
+#Enpoint, parametro opcional para filtrar por category_id
 @router.get("/tareas")
 def get_tareas(category_id: int | None = None, db = Depends(database.get_db_postgresql))-> list[Tarea]:
+
     cursor = db.cursor()
+
     query = ("SELECT tareas.id, tareas.titulo_tarea, tareas.descripcion, tareas.fecha, tareas.estado, tareas.category_id, categorias.titulo_categoria "
              "FROM tareas INNER JOIN categorias ON tareas.category_id = categorias.id")
     #query += "INNER JOIN categorias ON tareas.category_id = categorias.id"
@@ -48,6 +51,7 @@ def get_tareas(category_id: int | None = None, db = Depends(database.get_db_post
     #TODO: la variable resultado contiene la columna unida de categorias "titulo_categoria" pero no se guarda al momento de retornar la lista tareas
     # puesto que el esquema de tareas no tiene una variable que guarde el nombre de la categoria, actualmente solo el id de la categoria,
     # tocaria añadir una nueva variable al esquema y cambiar todos los endpoints donde se utilice este para que funcione debidamente
+
     resultados = cursor.fetchall()
     tareas = []
     for tarea in resultados:
@@ -64,6 +68,7 @@ def get_tareas(category_id: int | None = None, db = Depends(database.get_db_post
 @router.get("/tareas/{id}")
 def get_tarea(id: int, db = Depends(database.get_db_postgresql)) -> Tarea:
     cursor = db.cursor()
+
     cursor.execute("SELECT * FROM tareas WHERE id = %s", (id,))
     resultado = cursor.fetchone()
     if resultado is None:
