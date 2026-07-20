@@ -9,7 +9,7 @@ router = APIRouter()
 
 @router.post("/tareas")
 def crear_tarea(tarea: CrearTarea, db = Depends(database.get_db_postgresql)) -> Tarea:
-    print(tarea.nombre)
+    print(tarea.titulo_tarea)
     cursor = db.cursor()
     estado = 'Pendiente'
     cursor.execute("SELECT * FROM categorias WHERE id = %s", (tarea.category_id,))
@@ -20,13 +20,13 @@ def crear_tarea(tarea: CrearTarea, db = Depends(database.get_db_postgresql)) -> 
 
 
 
-    cursor.execute("insert into tareas (titulo_tarea, descripcion, fecha, estado, category_id) values (%s, %s, %s, %s, %s) RETURNING id", (tarea.nombre, tarea.descripcion, tarea.fecha, estado, tarea.category_id))
+    cursor.execute("insert into tareas (titulo_tarea, descripcion, fecha, estado, category_id) values (%s, %s, %s, %s, %s) RETURNING id", (tarea.titulo_tarea, tarea.descripcion, tarea.fecha, estado, tarea.category_id))
     db.commit()
     fetch_ans = cursor.fetchone()
 
 
     return Tarea(id=fetch_ans["id"],
-                 nombre=tarea.nombre,
+                 titulo_tarea=tarea.titulo_tarea,
                  descripcion=tarea.descripcion,
                  fecha=tarea.fecha,
                  estado= estado,
@@ -57,7 +57,7 @@ def get_tareas(category_id: int | None = None, db = Depends(database.get_db_post
     for tarea in resultados:
         #cursor.execute("SELECT titulo FROM categorias  WHERE id = %s", (category_id,))
         tareas.append(Tarea(id=tarea["id"],
-                            nombre=tarea["titulo_tarea"],
+                            titulo_tarea=tarea["titulo_tarea"],
                             descripcion=tarea["descripcion"],
                             fecha=tarea["fecha"],
                             estado=tarea["estado"],
@@ -75,7 +75,7 @@ def get_tarea(id: int, db = Depends(database.get_db_postgresql)) -> Tarea:
         raise HTTPException(status_code=404, detail=" Tarea no encontrada")
 
     return Tarea(id=resultado["id"],
-                 nombre=resultado["titulo_tarea"],
+                 titulo_tarea=resultado["titulo_tarea"],
                  descripcion=resultado["descripcion"],
                  fecha=resultado["fecha"],
                  estado=resultado["estado"],
@@ -92,7 +92,7 @@ def actualizar_tarea(id: int, tarea_a_actualizar: ActualizarTarea, db = Depends(
 
     tarea_final_dict = {
         "id": resultado["id"],
-        "nombre": resultado["titulo_tarea"],
+        "titulo_tarea": resultado["titulo_tarea"],
         "descripcion": resultado["descripcion"],
         "fecha": resultado["fecha"],
         "estado": resultado["estado"],
@@ -121,8 +121,6 @@ def actualizar_tarea(id: int, tarea_a_actualizar: ActualizarTarea, db = Depends(
     set_str = set_str[:-2]
 
     query = "UPDATE tareas SET " + set_str + " WHERE id = %s"
-    print(query)
-    print(values)
     cursor.execute(query, (values))
     db.commit()
     return tarea_final
@@ -138,7 +136,7 @@ def eliminar_tarea(id: int, db = Depends(database.get_db_postgresql))-> Tarea:
     db.commit()
 
     return Tarea(id=resultado["id"],
-                 nombre=resultado["titulo_tarea"],
+                 titulo_tarea=resultado["titulo_tarea"],
                  descripcion=resultado["descripcion"],
                  fecha=resultado["fecha"],
                  estado=resultado["estado"],

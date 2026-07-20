@@ -1,44 +1,42 @@
 from pydantic import BaseModel, json
-
+from typing import Any
+from psycopg2.extras import Json
 
 class CrearPlantilla(BaseModel):
-    nombre: str
-    category_id: int
-    campos: str
+    titulo_plantilla: str
+    category_id: int | None = None
+    campos: dict[str, str]
 
+class ActualizarPlantilla(BaseModel):
+    titulo_plantilla: str | None = None
+    category_id: int | None = None
+    campos: dict[str, str] | None = None
 
 class Plantilla(BaseModel):
     id: int
-    nombre: str
-    category_id: int
-    campos : str
+    titulo_plantilla: str
+    category_id: int | None = None
+    campos : dict[str, str]
     es_default: bool
 
 class Categoria(BaseModel):
     id: int
-    nombre: str
+    titulo_categoria: str
 
 class CrearCategoria(BaseModel):
-    nombre: str
-
-class Plantilla(BaseModel):
-    id: int
-    nombre: str
-    campos: str
-    category_id: int
-    es_default: int
+    titulo_categoria: str
 
 class ActualizarCategoria(BaseModel):
-    titulo: str
+    titulo_categoria: str
 
 class CrearTarea(BaseModel):
-    nombre: str
+    titulo_tarea: str
     descripcion: str | None = None
     fecha: str | None = None
     category_id: int
 
 class ActualizarTarea(BaseModel):
-    titulo: str | None = None
+    titulo_tarea: str | None = None
     descripcion: str | None = None
     fecha: str | None = None
     estado: str | None = None
@@ -46,7 +44,7 @@ class ActualizarTarea(BaseModel):
 
 class Tarea(BaseModel):
     id: int
-    nombre: str
+    titulo_tarea: str
     descripcion: str | None = None
     fecha: str | None = None
     estado: str | None = None

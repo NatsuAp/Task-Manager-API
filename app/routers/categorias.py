@@ -13,7 +13,7 @@ def get_categorias(db = Depends(database.get_db_postgresql))-> list[Categoria]:
     cursor.execute("SELECT * FROM categorias")
     resultados = cursor.fetchall()
     for fila in resultados:
-        categorias.append(Categoria(id=fila["id"], nombre=fila["titulo_categoria"]))
+        categorias.append(Categoria(id=fila["id"], titulo_categoria=fila["titulo_categoria"]))
 
 
     return categorias
@@ -26,16 +26,16 @@ def get_categoria(id: int, db = Depends(database.get_db_postgresql))-> Categoria
     if resultado is None:
         raise HTTPException(status_code=404, detail="Categoria no existe")
 
-    return Categoria(id=id, nombre=resultado["titulo_categoria"])
+    return Categoria(id=id, titulo_categoria=resultado["titulo_categoria"])
 
 @router.post("/categorias")
 def crear_categoria(categoria: CrearCategoria, db=Depends(database.get_db_postgresql))-> Categoria:
     cursor = db.cursor()
-    cursor.execute("INSERT INTO categorias (titulo_categoria) VALUES (%s) RETURNING id", (categoria.nombre,))
+    cursor.execute("INSERT INTO categorias (titulo_categoria) VALUES (%s) RETURNING id", (categoria.titulo_categoria,))
     fetch_ans = cursor.fetchone()
 
     db.commit()
-    return Categoria(id=fetch_ans["id"], nombre=categoria.nombre)
+    return Categoria(id=fetch_ans["id"], titulo_categoria=categoria.titulo_categoria)
 @router.patch("/categorias/{id}")
 def actualizar_categoria(id: int, actualizarCategoria: ActualizarCategoria, db=Depends(database.get_db_postgresql))-> Categoria:
     cursor = db.cursor()
@@ -44,9 +44,9 @@ def actualizar_categoria(id: int, actualizarCategoria: ActualizarCategoria, db=D
     if resultado is None:
         raise HTTPException(status_code=404, detail="Categoria no existe")
 
-    cursor.execute("UPDATE categorias SET titulo_categoria = %s WHERE id = %s", (actualizarCategoria.titulo, id))
+    cursor.execute("UPDATE categorias SET titulo_categoria = %s WHERE id = %s", (actualizarCategoria.titulo_categoria, id))
     db.commit()
-    return Categoria(id=id, nombre=actualizarCategoria.titulo)
+    return Categoria(id=id, titulo_categoria=actualizarCategoria.titulo_categoria)
 
 @router.delete("/categorias{id}")
 def eliminar_categoria(id: int, db=Depends(database.get_db_postgresql))-> Categoria:
@@ -59,5 +59,5 @@ def eliminar_categoria(id: int, db=Depends(database.get_db_postgresql))-> Catego
     cursor.execute("DELETE FROM categorias WHERE id = %s", (id,))
     db.commit()
 
-    return Categoria(id=id, nombre=resultado["titulo_categoria"])
+    return Categoria(id=id, titulo_categoria=resultado["titulo_categoria"])
 
