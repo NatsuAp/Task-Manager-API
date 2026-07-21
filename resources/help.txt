@@ -20,3 +20,8 @@ CREATE TABLE tareas (
 ##POSTGRES
 
 Mirar esquema tabla -> \d tabla
+
+
+IndexError: tuple index out of range
+Este error tiene que ver con la cantidad de parametros pasados a la query de sql a traves de psycopg2
+en la linea cursor.execute(query, listparams) ej: 3 params 4 objetos en la lista

@@ -34,6 +34,8 @@ class CrearTarea(BaseModel):
     descripcion: str | None = None
     fecha: str | None = None
     category_id: int
+    template_id: int | None = None
+    campos: dict[str, str] | None = None
 
 class ActualizarTarea(BaseModel):
     titulo_tarea: str | None = None
@@ -41,6 +43,8 @@ class ActualizarTarea(BaseModel):
     fecha: str | None = None
     estado: str | None = None
     category_id: int | None = None
+    template_id: int | None = None
+    campos: dict[str, str] | None = None
 
 class Tarea(BaseModel):
     id: int
@@ -49,3 +53,5 @@ class Tarea(BaseModel):
     fecha: str | None = None
     estado: str | None = None
     category_id: int
+    template_id: int | None = None
+    campos: dict[str, str] | None = None

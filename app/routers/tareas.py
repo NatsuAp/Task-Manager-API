@@ -4,12 +4,15 @@ from app.schemas import CrearTarea, Tarea, ActualizarTarea
 #import app.database_sqlite as database
 import app.database_postgresql as database
 from fastapi import Depends, APIRouter
+import json
+from psycopg2.extras import Json
+from sentry_sdk.utils import json_dumps
 
 router = APIRouter()
 
 @router.post("/tareas")
 def crear_tarea(tarea: CrearTarea, db = Depends(database.get_db_postgresql)) -> Tarea:
-    print(tarea.titulo_tarea)
+
     cursor = db.cursor()
     estado = 'Pendiente'
     cursor.execute("SELECT * FROM categorias WHERE id = %s", (tarea.category_id,))
@@ -19,8 +22,28 @@ def crear_tarea(tarea: CrearTarea, db = Depends(database.get_db_postgresql)) -> 
         raise HTTPException(status_code=404, detail="Categoria con ese ID no existe")
 
 
+    campos = None
+    if tarea.template_id is not None:
+        cursor.execute("SELECT campos FROM plantillas WHERE id = %s AND category_id = %s", (tarea.template_id, tarea.category_id))
+        campos_query = cursor.fetchone()
+        if campos_query is None:
+            raise HTTPException(status_code=404, detail="plantilla no existe")
 
-    cursor.execute("insert into tareas (titulo_tarea, descripcion, fecha, estado, category_id) values (%s, %s, %s, %s, %s) RETURNING id", (tarea.titulo_tarea, tarea.descripcion, tarea.fecha, estado, tarea.category_id))
+        campos = campos_query["campos"]
+
+    if tarea.campos is not None and campos is not None:
+        tarea.campos = campos | tarea.campos
+    elif campos is not None:
+        tarea.campos = campos
+
+
+
+
+
+        cursor.execute("insert into tareas (titulo_tarea, descripcion, fecha, estado, category_id, template_id, campos) "
+                   "values (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
+                   (tarea.titulo_tarea, tarea.descripcion, tarea.fecha, estado, tarea.category_id, tarea.template_id, Json(tarea.campos)))
+
     db.commit()
     fetch_ans = cursor.fetchone()
 
@@ -30,7 +53,9 @@ def crear_tarea(tarea: CrearTarea, db = Depends(database.get_db_postgresql)) -> 
                  descripcion=tarea.descripcion,
                  fecha=tarea.fecha,
                  estado= estado,
-                 category_id=tarea.category_id)
+                 category_id=tarea.category_id,
+                 template_id=tarea.template_id,
+                 campos= tarea.campos)
 
 #Enpoint, parametro opcional para filtrar por category_id
 @router.get("/tareas")
@@ -38,7 +63,15 @@ def get_tareas(category_id: int | None = None, db = Depends(database.get_db_post
 
     cursor = db.cursor()
 
-    query = ("SELECT tareas.id, tareas.titulo_tarea, tareas.descripcion, tareas.fecha, tareas.estado, tareas.category_id, categorias.titulo_categoria "
+    query = ("SELECT tareas.id, "
+             "tareas.titulo_tarea, "
+             "tareas.descripcion, "
+             "tareas.fecha, "
+             "tareas.estado, "
+             "tareas.category_id, "
+             "tareas.template_id, "
+             "tareas.campos, "
+             "categorias.titulo_categoria "
              "FROM tareas INNER JOIN categorias ON tareas.category_id = categorias.id")
     #query += "INNER JOIN categorias ON tareas.category_id = categorias.id"
     params = ()
@@ -61,7 +94,9 @@ def get_tareas(category_id: int | None = None, db = Depends(database.get_db_post
                             descripcion=tarea["descripcion"],
                             fecha=tarea["fecha"],
                             estado=tarea["estado"],
-                            category_id=tarea["category_id"]))
+                            category_id=tarea["category_id"],
+                            template_id=tarea["template_id"],
+                            campos = tarea["campos"]))
 
     return tareas
 
@@ -74,12 +109,7 @@ def get_tarea(id: int, db = Depends(database.get_db_postgresql)) -> Tarea:
     if resultado is None:
         raise HTTPException(status_code=404, detail=" Tarea no encontrada")
 
-    return Tarea(id=resultado["id"],
-                 titulo_tarea=resultado["titulo_tarea"],
-                 descripcion=resultado["descripcion"],
-                 fecha=resultado["fecha"],
-                 estado=resultado["estado"],
-                 category_id=resultado["category_id"])
+    return Tarea(**resultado)
 
 @router.patch("/tareas/{id}")
 def actualizar_tarea(id: int, tarea_a_actualizar: ActualizarTarea, db = Depends(database.get_db_postgresql)) -> Tarea:
@@ -96,7 +126,9 @@ def actualizar_tarea(id: int, tarea_a_actualizar: ActualizarTarea, db = Depends(
         "descripcion": resultado["descripcion"],
         "fecha": resultado["fecha"],
         "estado": resultado["estado"],
-        "category_id": resultado["category_id"]
+        "category_id": resultado["category_id"],
+        "template_id": resultado["template_id"],
+        "campos": Json(resultado["campos"])
     }
 
 
@@ -115,13 +147,18 @@ def actualizar_tarea(id: int, tarea_a_actualizar: ActualizarTarea, db = Depends(
     set_str = ""
 
     for key, value in datos.items():
-        values.append(value)
+        if isinstance(value, dict):
+            values.append(Json(value))
+        else:
+            values.append(value)
         set_str += f"{key} = %s, "
     values.append(id)
     set_str = set_str[:-2]
 
     query = "UPDATE tareas SET " + set_str + " WHERE id = %s"
-    cursor.execute(query, (values))
+    print(query)
+    print(*values, sep="###")
+    cursor.execute(query, values)
     db.commit()
     return tarea_final
 @router.delete("/tareas/{id}")
@@ -135,13 +172,7 @@ def eliminar_tarea(id: int, db = Depends(database.get_db_postgresql))-> Tarea:
     cursor.execute("DELETE FROM tareas WHERE id = %s", (id,))
     db.commit()
 
-    return Tarea(id=resultado["id"],
-                 titulo_tarea=resultado["titulo_tarea"],
-                 descripcion=resultado["descripcion"],
-                 fecha=resultado["fecha"],
-                 estado=resultado["estado"],
-                 category_id=resultado["category_id"]
-                 )
+    return Tarea(**resultado)
 
 
 
