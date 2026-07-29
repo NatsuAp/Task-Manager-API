@@ -5,7 +5,6 @@ from fastapi import Depends, HTTPException
 from psycopg2.extras import Json
 import app.database_postgresql as database
 
-
 router = APIRouter()
 
 @router.get("/plantillas")
@@ -45,7 +44,6 @@ def get_plantilla(id: int, db = Depends(database.get_db_postgresql)) -> Plantill
                      campos=plantilla['campos'],
                      es_default=plantilla['es_default'])
 
-
 @router.post("/plantillas")
 def crear_plantilla(crearPlantilla: CrearPlantilla, db = Depends(database.get_db_postgresql)) -> Plantilla:
     cursor = db.cursor()
@@ -65,10 +63,6 @@ def crear_plantilla(crearPlantilla: CrearPlantilla, db = Depends(database.get_db
                      campos=crearPlantilla.campos,
                      es_default=False)
 
-# class ActualizarPlantilla(BaseModel):
-#     titulo_plantilla: str | None = None
-#     category_id: int | None = None
-#     campos: dict[str, str] | None = None
 @router.patch("/plantillas/{id}")
 def actualizar_plantilla(id: int, actualizarPlantilla : ActualizarPlantilla, db = Depends(database.get_db_postgresql)) -> Plantilla:
     cursor = db.cursor()
@@ -87,8 +81,6 @@ def actualizar_plantilla(id: int, actualizarPlantilla : ActualizarPlantilla, db 
     datos_nuevos = actualizarPlantilla.model_dump(exclude_defaults=True,
                                           exclude_none=True,
                                           exclude_unset=True)
-    print("Datos nuevos: " + str(datos_nuevos))
-
     for key, value in datos_nuevos.items():
         plantilla_final_dict[key] = value
 
@@ -127,10 +119,4 @@ def eliminar_plantilla(id: int, db = Depends(database.get_db_postgresql)) -> Pla
     cursor.execute("DELETE FROM plantillas WHERE id = %s", (id,))
     db.commit()
     return Plantilla(**plantilla)
-
-
-
-
-
-
 

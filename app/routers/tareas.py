@@ -1,4 +1,4 @@
-
+import psycopg2
 from fastapi import HTTPException
 from app.schemas import CrearTarea, Tarea, ActualizarTarea
 #import app.database_sqlite as database
@@ -115,7 +115,7 @@ def get_tarea(id: int, db = Depends(database.get_db_postgresql)) -> Tarea:
 def actualizar_tarea(id: int, tarea_a_actualizar: ActualizarTarea, db = Depends(database.get_db_postgresql)) -> Tarea:
 
     cursor = db.cursor()
-    cursor.execute("SELECT * FROM tareas WHERE id = %s", (id,))
+    cursor.execute("SELECT id, titulo_tarea, descripcion, fecha, estado, category_id, template_id, campos FROM tareas WHERE id = %s", (id,))
     resultado = cursor.fetchone()
     if resultado is None:
         raise HTTPException(status_code=404, detail=" Tarea no encontrada")
@@ -128,7 +128,8 @@ def actualizar_tarea(id: int, tarea_a_actualizar: ActualizarTarea, db = Depends(
         "estado": resultado["estado"],
         "category_id": resultado["category_id"],
         "template_id": resultado["template_id"],
-        "campos": Json(resultado["campos"])
+        "campos": resultado["campos"]
+
     }
 
 
@@ -136,9 +137,10 @@ def actualizar_tarea(id: int, tarea_a_actualizar: ActualizarTarea, db = Depends(
     datos = tarea_a_actualizar.model_dump(exclude_defaults=True,
                                           exclude_none=True,
                                           exclude_unset=True,)
-    for key, value in datos.items():
-        tarea_final_dict[key] = value
 
+    for key, value in datos.items():
+        tarea_final_dict[key] = str(value)
+    print(tarea_final_dict)
     tarea_final = Tarea(**tarea_final_dict)
     if len(datos) == 0:
         raise HTTPException(status_code=400, detail="No se proporcionaron datos para actualizar")
@@ -158,7 +160,10 @@ def actualizar_tarea(id: int, tarea_a_actualizar: ActualizarTarea, db = Depends(
     query = "UPDATE tareas SET " + set_str + " WHERE id = %s"
     print(query)
     print(*values, sep="###")
-    cursor.execute(query, values)
+    try:
+        cursor.execute(query, values)
+    except psycopg2.errors.IntegrityError as e:
+        raise HTTPException(status_code=400, detail="Error de constraint la columna estado solo puede contener \"Pendiente\" o \"Completo\" ")
     db.commit()
     return tarea_final
 @router.delete("/tareas/{id}")

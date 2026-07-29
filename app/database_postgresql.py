@@ -2,6 +2,7 @@ import psycopg2
 import os
 from psycopg2.extras import DictCursor
 from dotenv import load_dotenv
+from fastapi import Depends
 
 def start_db_postgresql():
     load_dotenv()
@@ -14,4 +15,6 @@ def get_db_postgresql():
         yield conn
     finally:
         conn.close()
+
+
 
