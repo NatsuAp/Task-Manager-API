@@ -163,6 +163,7 @@ def actualizar_tarea(id: int, tarea_a_actualizar: ActualizarTarea, db = Depends(
     try:
         cursor.execute(query, values)
     except psycopg2.errors.IntegrityError as e:
+        db.rollback()
         raise HTTPException(status_code=400, detail="Error de constraint la columna estado solo puede contener \"Pendiente\" o \"Completo\" ")
     db.commit()
     return tarea_final
@@ -178,10 +179,6 @@ def eliminar_tarea(id: int, db = Depends(database.get_db_postgresql))-> Tarea:
     db.commit()
 
     return Tarea(**resultado)
-
-
-
-
 
 
 
