@@ -6,13 +6,14 @@ import app.database.database_postgresql as database
 from fastapi import Depends, APIRouter
 import json
 from psycopg2.extras import Json
-from sentry_sdk.utils import json_dumps
+from app.redis.redis_client import redis_client
+import json
+from app.config import CACHE_TTL
 
 router = APIRouter()
 
 @router.post("/tareas")
 def crear_tarea(tarea: CrearTarea, db = Depends(database.get_db_postgresql)) -> Tarea:
-
     cursor = db.cursor()
     estado = 'Pendiente'
     cursor.execute("SELECT * FROM categorias WHERE id = %s", (tarea.category_id,))
@@ -48,9 +49,7 @@ def crear_tarea(tarea: CrearTarea, db = Depends(database.get_db_postgresql)) -> 
 
     db.commit()
     fetch_ans = cursor.fetchone()
-
-
-    return Tarea(id=fetch_ans["id"],
+    tarea = Tarea(id=fetch_ans["id"],
                  titulo_tarea=tarea.titulo_tarea,
                  descripcion=tarea.descripcion,
                  fecha=tarea.fecha,
@@ -58,10 +57,25 @@ def crear_tarea(tarea: CrearTarea, db = Depends(database.get_db_postgresql)) -> 
                  category_id=tarea.category_id,
                  template_id=tarea.template_id,
                  campos= tarea.campos)
+    for key in redis_client.scan_iter("tareas*"):
+        redis_client.unlink(key)
+    return tarea
 
 #Enpoint, parametro opcional para filtrar por category_id
 @router.get("/tareas")
 def get_tareas(category_id: int | None = None, db = Depends(database.get_db_postgresql))-> list[Tarea]:
+    key = "tareas"
+    if category_id is not None:
+        key = key + f"_c_{category_id}"
+    cache = redis_client.get(key)
+    if cache is not None:
+        datos = json.loads(cache)
+        tareas = []
+        for dato in datos:
+            tareas.append(Tarea(**dato))
+
+        print("Entro en cache")
+        return tareas
 
     cursor = db.cursor()
 
@@ -99,18 +113,23 @@ def get_tareas(category_id: int | None = None, db = Depends(database.get_db_post
                             category_id=tarea["category_id"],
                             template_id=tarea["template_id"],
                             campos = tarea["campos"]))
-
+    redis_client.set(key, json.dumps([c.model_dump() for c in tareas] ), ex=CACHE_TTL)
     return tareas
 
 @router.get("/tareas/{id}")
 def get_tarea(id: int, db = Depends(database.get_db_postgresql)) -> Tarea:
+    cache = redis_client.get(f'tareas_{id}')
+    if cache is not None:
+        datos = json.loads(cache)
+        return Tarea(**datos)
+
     cursor = db.cursor()
 
     cursor.execute("SELECT * FROM tareas WHERE id = %s", (id,))
     resultado = cursor.fetchone()
     if resultado is None:
         raise HTTPException(status_code=404, detail=" Tarea no encontrada")
-
+    redis_client.set(f'tareas_{id}')
     return Tarea(**resultado)
 
 @router.patch("/tareas/{id}")
@@ -168,6 +187,8 @@ def actualizar_tarea(id: int, tarea_a_actualizar: ActualizarTarea, db = Depends(
         db.rollback()
         raise HTTPException(status_code=400, detail="Error de constraint la columna estado solo puede contener \"Pendiente\" o \"Completo\" ")
     db.commit()
+    for key in redis_client.scan_iter("tareas*"):
+        redis_client.unlink(key)
     return tarea_final
 @router.delete("/tareas/{id}")
 def eliminar_tarea(id: int, db = Depends(database.get_db_postgresql))-> Tarea:
@@ -180,6 +201,8 @@ def eliminar_tarea(id: int, db = Depends(database.get_db_postgresql))-> Tarea:
     cursor.execute("DELETE FROM tareas WHERE id = %s", (id,))
     db.commit()
 
+    for key in redis_client.scan_iter("tareas*"):
+        redis_client.unlink(key)
     return Tarea(**resultado)
 
 
