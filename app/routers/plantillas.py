@@ -3,7 +3,7 @@ from fastapi import APIRouter
 from app.schemas import Plantilla, CrearPlantilla, ActualizarPlantilla
 from fastapi import Depends, HTTPException
 from psycopg2.extras import Json
-import app.database_postgresql as database
+import app.database.database_postgresql as database
 
 router = APIRouter()
 

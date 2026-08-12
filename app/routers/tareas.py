@@ -2,7 +2,7 @@ import psycopg2
 from fastapi import HTTPException
 from app.schemas import CrearTarea, Tarea, ActualizarTarea
 #import app.database_sqlite as database
-import app.database_postgresql as database
+import app.database.database_postgresql as database
 from fastapi import Depends, APIRouter
 import json
 from psycopg2.extras import Json
@@ -36,13 +36,15 @@ def crear_tarea(tarea: CrearTarea, db = Depends(database.get_db_postgresql)) -> 
     elif campos is not None:
         tarea.campos = campos
 
+    print("############### - ")
+    print(tarea)
 
 
 
-
-        cursor.execute("insert into tareas (titulo_tarea, descripcion, fecha, estado, category_id, template_id, campos) "
+    cursor.execute("insert into tareas (titulo_tarea, descripcion, fecha, estado, category_id, template_id, campos) "
                    "values (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
                    (tarea.titulo_tarea, tarea.descripcion, tarea.fecha, estado, tarea.category_id, tarea.template_id, Json(tarea.campos)))
+
 
     db.commit()
     fetch_ans = cursor.fetchone()

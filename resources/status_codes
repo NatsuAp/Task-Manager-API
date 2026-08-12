@@ -7,4 +7,4 @@
 404 Not Found: The server cannot find the requested resource.
 500 Internal Server Error: A generic error indicating the server encountered an unexpected condition.
 502 Bad Gateway: The server, acting as a gateway, received an invalid response from an upstream server.
-503 Service Unavailable: The server is currently unable to handle the request, often due to maintenance or overload.
+503 Service Unavailable: The server is currently unable to handle the request, often due to maintenance or overload.cat

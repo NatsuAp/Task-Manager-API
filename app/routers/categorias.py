@@ -1,20 +1,31 @@
 from fastapi import APIRouter, Depends
 #import app.database_sqlite as database
-import app.database_postgresql as database
+import app.database.database_postgresql as database
 from app.schemas import Categoria, CrearCategoria, ActualizarCategoria
 from fastapi import HTTPException
+from app.redis.redis_client import redis_client
+import json
 router = APIRouter()
 
 
 @router.get("/categorias")
 def get_categorias(db = Depends(database.get_db_postgresql))-> list[Categoria]:
+    cache = redis_client.get("categorias")
+    if cache is not None:
+        datos = json.loads(cache)
+        categorias = []
+        for dato in datos:
+            categorias.append(Categoria(**dato))
+
+        print("Entro en cache")
+        return categorias
     categorias = []
     cursor = db.cursor()
     cursor.execute("SELECT * FROM categorias")
     resultados = cursor.fetchall()
     for fila in resultados:
         categorias.append(Categoria(id=fila["id"], titulo_categoria=fila["titulo_categoria"]))
-
+    redis_client.set('categorias', json.dumps([c.model_dump() for c in categorias]), ex= 10)
 
     return categorias
 
