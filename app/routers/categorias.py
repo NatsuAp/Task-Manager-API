@@ -5,6 +5,7 @@ from app.schemas import Categoria, CrearCategoria, ActualizarCategoria
 from fastapi import HTTPException
 from app.redis.redis_client import redis_client
 import json
+from app.config import CACHE_TTL
 router = APIRouter()
 
 
@@ -25,7 +26,7 @@ def get_categorias(db = Depends(database.get_db_postgresql))-> list[Categoria]:
     resultados = cursor.fetchall()
     for fila in resultados:
         categorias.append(Categoria(id=fila["id"], titulo_categoria=fila["titulo_categoria"]))
-    redis_client.set('categorias', json.dumps([c.model_dump() for c in categorias]), ex= 10)
+    redis_client.set('categorias', json.dumps([c.model_dump() for c in categorias]), ex= CACHE_TTL)
 
     return categorias
 
