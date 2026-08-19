@@ -14,4 +14,4 @@ def read_root():
     start_redis()
     return {"Working :)"}
 
-#revisarFechaExpirada()
+start_redis()

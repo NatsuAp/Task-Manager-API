@@ -194,8 +194,18 @@ def actualizar_tarea(id: int, tarea_a_actualizar: ActualizarTarea, db = Depends(
         db.rollback()
         raise HTTPException(status_code=400, detail="Error de constraint la columna estado solo puede contener \"Pendiente\" o \"Completo\" ")
     db.commit()
+    redis_client.delete(tarea_final.id)
+    if tarea_a_actualizar.fecha is not None:
+        print("entro")
+        timestamp = int(datetime.fromisoformat(tarea_a_actualizar.fecha).timestamp())
+        print(timestamp)
+        print("id: " + str(tarea_final.id))
+        redis_client.set(tarea_final.id, 'fecha', exat=timestamp)
+        print(redis_client.keys())
     for key in redis_client.scan_iter("tareas*"):
         redis_client.unlink(key)
+
+
     return tarea_final
 @router.delete("/tareas/{id}")
 def eliminar_tarea(id: int, db = Depends(database.get_db_postgresql))-> Tarea:
@@ -210,6 +220,7 @@ def eliminar_tarea(id: int, db = Depends(database.get_db_postgresql))-> Tarea:
 
     for key in redis_client.scan_iter("tareas*"):
         redis_client.unlink(key)
+    redis_client.delete(id)
     return Tarea(**resultado)
 
 
