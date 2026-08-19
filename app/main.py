@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+
+#from app.events_listener import revisarFechaExpirada
 from app.redis.redis_client import start_redis
 from app.routers.tareas import router as tareas_router
 from app.routers.categorias import router as categorias_router
@@ -12,3 +14,4 @@ def read_root():
     start_redis()
     return {"Working :)"}
 
+#revisarFechaExpirada()

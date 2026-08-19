@@ -9,6 +9,7 @@ from psycopg2.extras import Json
 from app.redis.redis_client import redis_client
 import json
 from app.config import CACHE_TTL
+from datetime import datetime
 
 router = APIRouter()
 
@@ -49,6 +50,12 @@ def crear_tarea(tarea: CrearTarea, db = Depends(database.get_db_postgresql)) -> 
 
     db.commit()
     fetch_ans = cursor.fetchone()
+    if tarea.fecha is not None:  # Formato iso: 2026-08-20T23:59:59-05:00
+        fecha = datetime.fromisoformat(tarea.fecha)
+        # TODO: Eliminar esta llave si se borra la tarea
+        timestamp = int(fecha.timestamp())
+        redis_client.set(fetch_ans["id"],'fecha', exat=timestamp)
+
     tarea = Tarea(id=fetch_ans["id"],
                  titulo_tarea=tarea.titulo_tarea,
                  descripcion=tarea.descripcion,
